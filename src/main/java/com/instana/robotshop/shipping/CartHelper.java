@@ -1,74 +1,53 @@
 package com.instana.robotshop.shipping;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
-
+import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-
 public class CartHelper {
     private static final Logger logger = LoggerFactory.getLogger(CartHelper.class);
-    
-    private String baseUrl;
 
+    private String baseUrl;
     public CartHelper(String baseUrl) {
         this.baseUrl = baseUrl;
     }
-
-    // TODO - Remove deprecated calls
     public String addToCart(String id, String data) {
         logger.info("add shipping to cart {}", id);
         StringBuilder buffer = new StringBuilder();
-
-        CloseableHttpClient httpClient = null;
-        try {
-            // set timeout to 5 secs
-            HttpParams httpParams = new BasicHttpParams();
-            HttpConnectionParams.setConnectionTimeout(httpParams, 5000);
-
-            httpClient = HttpClients.createDefault();
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectTimeout(5000)
+                .setSocketTimeout(5000)
+                .build();
+        try (CloseableHttpClient httpClient = HttpClients.custom()
+                .setDefaultRequestConfig(requestConfig)
+                .build()) {
             HttpPost postRequest = new HttpPost(baseUrl + id);
-            StringEntity payload = new StringEntity(data);
+            StringEntity payload = new StringEntity(data, StandardCharsets.UTF_8);
             payload.setContentType("application/json");
             postRequest.setEntity(payload);
-            CloseableHttpResponse res = httpClient.execute(postRequest);
-
-            if (res.getStatusLine().getStatusCode() == 200) {
-                BufferedReader in = new BufferedReader(new InputStreamReader(res.getEntity().getContent()));
-                String line;
-                while ((line = in.readLine()) != null) {
-                    buffer.append(line);
+            try (CloseableHttpResponse res = httpClient.execute(postRequest)) {
+                if (res.getStatusLine().getStatusCode() == 200) {
+                    try (BufferedReader in = new BufferedReader(
+                            new InputStreamReader(res.getEntity().getContent(), StandardCharsets.UTF_8))) {
+                        String line;
+                        while ((line = in.readLine()) != null) {
+                            buffer.append(line);
+                        }
+                    }
+                } else {
+                    logger.warn("Failed with code {}", res.getStatusLine().getStatusCode());
                 }
-            } else {
-                logger.warn("Failed with code {}", res.getStatusLine().getStatusCode());
             }
-            try {
-                res.close();
-            } catch(IOException e) {
-                logger.warn("httpresponse", e);
-            }
-        } catch(Exception e) {
+        } catch (IOException e) {
             logger.warn("http client exception", e);
-        } finally {
-            if (httpClient != null) {
-                try {
-                    httpClient.close();
-                } catch(IOException e) {
-                    logger.warn("httpclient", e);
-                }
-            }
         }
-
         // this will be empty on error
         return buffer.toString();
     }
