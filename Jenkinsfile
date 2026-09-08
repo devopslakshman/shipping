@@ -1,8 +1,8 @@
 pipeline {
     agent any
     environment {
-        IMAGE_NAME     = 'catalogue'
-        ECR_REPO_NAME  = 'roboshop/catalogue'
+        IMAGE_NAME     = 'shipping'
+        ECR_REPO_NAME  = 'roboshop/shipping'
         AWS_ACCOUNT_ID = '484056256762'
         AWS_REGION     = 'us-east-1'             // update if your ECR repo is in a different region
         ECR_REGISTRY   = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
