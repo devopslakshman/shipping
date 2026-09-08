@@ -5,20 +5,21 @@ public class Calculator {
     private double latitude = 0;
     private double longitude = 0;
 
-    public Calculator(double latitude, double longitude) {
+    Calculator(double latitude, double longitude) {
         this.latitude = latitude;
         this.longitude = longitude;
     }
 
-    public Calculator(City city) {
+    Calculator(City city) {
         this.latitude = city.getLatitude();
         this.longitude = city.getLongitude();
     }
 
     /**
      * Calculate the distance between this location and the target location.
-     * Use decimal latitude/longitude degrees.
-     * Formula is Haversine.
+     * Use decimal lat/long degrees.
+     * Formula is Haversine:
+     * https://www.movable-type.co.uk/scripts/latlong.html
      */
     public long getDistance(double targetLatitude, double targetLongitude) {
 
