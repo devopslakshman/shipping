@@ -21,9 +21,9 @@ import org.springframework.http.HttpStatus;
 public class Controller {
     private static final Logger logger = LoggerFactory.getLogger(Controller.class);
 
-    private String CART_URL = String.format("http://%s/shipping/", getenv("CART_ENDPOINT", "cart"));
+    private static final String CART_URL = String.format("http://%s/shipping/", getenv("CART_ENDPOINT", "cart"));
 
-    public static List bytesGlobal = Collections.synchronizedList(new ArrayList<byte[]>());
+    private static final List<byte[]> bytesGlobal = Collections.synchronizedList(new ArrayList<>());
 
     @Autowired
     private CityRepository cityrepo;
@@ -31,17 +31,15 @@ public class Controller {
     @Autowired
     private CodeRepository coderepo;
 
-    private String getenv(String key, String def) {
+    private static String getenv(String key, String def) {
         String val = System.getenv(key);
-        val = val == null ? def : val;
-
-        return val;
+        return val == null ? def : val;
     }
 
     @GetMapping(path = "/memory")
     public int memory() {
         byte[] bytes = new byte[1024 * 1024 * 25];
-        Arrays.fill(bytes,(byte)8);
+        Arrays.fill(bytes, (byte) 8);
         bytesGlobal.add(bytes);
 
         return bytesGlobal.size();
@@ -70,18 +68,14 @@ public class Controller {
     public Iterable<Code> codes() {
         logger.info("all codes");
 
-        Iterable<Code> codes = coderepo.findAll(Sort.by(Sort.Direction.ASC, "name"));
-
-        return codes;
+        return coderepo.findAll(Sort.by(Sort.Direction.ASC, "name"));
     }
 
     @GetMapping("/cities/{code}")
     public List<City> cities(@PathVariable String code) {
         logger.info("cities by code {}", code);
 
-        List<City> cities = cityrepo.findByCode(code);
-
-        return cities;
+        return cityrepo.findByCode(code);
     }
 
     @GetMapping("/match/{code}/{text}")
@@ -95,51 +89,3 @@ public class Controller {
         List<City> cities = cityrepo.match(code, text);
         /*
          * This is a dirty hack to limit the result size
-         * I'm sure there is a more spring boot way to do this
-         * TODO - neater
-         */
-        if (cities.size() > 10) {
-            cities = cities.subList(0, 9);
-        }
-
-        return cities;
-    }
-
-    @GetMapping("/calc/{id}")
-    public Ship caclc(@PathVariable long id) {
-        double homeLatitude = 51.164896;
-        double homeLongitude = 7.068792;
-
-        logger.info("Calculation for {}", id);
-
-        City city = cityrepo.findById(id);
-        if (city == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "city not found");
-        }
-
-        Calculator calc = new Calculator(city);
-        long distance = calc.getDistance(homeLatitude, homeLongitude);
-        // avoid rounding
-        double cost = Math.rint(distance * 5) / 100.0;
-        Ship ship = new Ship(distance, cost);
-        logger.info("shipping {}", ship);
-
-        return ship;
-    }
-
-    // enforce content type
-    @PostMapping(path = "/confirm/{id}", consumes = "application/json", produces = "application/json")
-    public String confirm(@PathVariable String id, @RequestBody String body) {
-        logger.info("confirm id: {}", id);
-        logger.info("body {}", body);
-
-        CartHelper helper = new CartHelper(CART_URL);
-        String cart = helper.addToCart(id, body);
-
-        if (cart.equals("")) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "cart not found");
-        }
-
-        return cart;
-    }
-}
