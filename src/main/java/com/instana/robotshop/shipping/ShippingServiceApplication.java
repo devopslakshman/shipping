@@ -15,7 +15,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
-import java.util.Random;
+import java.security.SecureRandom;
 @SpringBootApplication
 @EnableRetry
 @EnableWebMvc
@@ -27,7 +27,7 @@ public class ShippingServiceApplication implements WebMvcConfigurer {
             "us-east1",
             "us-west1"
     };
-    private static final Random RANDOM = new Random();
+    private static final SecureRandom RANDOM = new SecureRandom();
     public static void main(String[] args) {
         SpringApplication.run(ShippingServiceApplication.class, args);
     }
