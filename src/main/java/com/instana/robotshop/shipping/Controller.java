@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,11 +20,16 @@ import org.springframework.http.HttpStatus;
 
 @RestController
 public class Controller {
+
     private static final Logger logger = LoggerFactory.getLogger(Controller.class);
 
-    private static final String CART_URL = String.format("http://%s/shipping/", getenv("CART_ENDPOINT", "cart"));
+    private static final String CART_URL = String.format(
+            "http://%s/shipping/",
+            getenv("CART_ENDPOINT", "cart")
+    );
 
-    private static final List<byte[]> bytesGlobal = Collections.synchronizedList(new ArrayList<>());
+    private static final List<byte[]> bytesGlobal =
+            Collections.synchronizedList(new ArrayList<>());
 
     @Autowired
     private CityRepository cityrepo;
@@ -68,7 +74,9 @@ public class Controller {
     public Iterable<Code> codes() {
         logger.info("all codes");
 
-        return coderepo.findAll(Sort.by(Sort.Direction.ASC, "name"));
+        return coderepo.findAll(
+                Sort.by(Sort.Direction.ASC, "name")
+        );
     }
 
     @GetMapping("/cities/{code}")
@@ -79,7 +87,10 @@ public class Controller {
     }
 
     @GetMapping("/match/{code}/{text}")
-    public List<City> match(@PathVariable String code, @PathVariable String text) {
+    public List<City> match(
+            @PathVariable String code,
+            @PathVariable String text) {
+
         logger.info("match code {} text {}", code, text);
 
         if (text.length() < 3) {
@@ -87,5 +98,11 @@ public class Controller {
         }
 
         List<City> cities = cityrepo.match(code, text);
+
         /*
          * This is a dirty hack to limit the result size
+         */
+
+        return cities;
+    }
+}
